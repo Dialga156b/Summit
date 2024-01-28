@@ -1,0 +1,400 @@
+(function () {
+  
+  let color = `rgb(245, 171, 44)`;
+  const guiContainer = document.createElement("div");
+  guiContainer.id = "summitMainContainerEdpuzzle";
+  guiContainer.style = `
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: #191919;
+      padding: 15px;
+      z-index: 9999;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      font-family: 'Arial', sans-serif;
+      color: #fff;
+    `;
+  guiContainer.style.outline = `3px solid ${color}`;
+  document.body.appendChild(guiContainer);
+
+  let isDragging = false;
+  let offsetX, offsetY;
+
+  guiContainer.addEventListener("mousedown", function (e) {
+    isDragging = true;
+    offsetX = e.clientX - guiContainer.getBoundingClientRect().left;
+    offsetY = e.clientY - guiContainer.getBoundingClientRect().top;
+  });
+
+  window.addEventListener("mouseup", function () {
+    isDragging = false;
+  });
+
+  window.addEventListener("mousemove", function (e) {
+    if (isDragging) {
+      guiContainer.style.left = e.clientX - offsetX + "px";
+      guiContainer.style.top = e.clientY - offsetY + "px";
+    }
+  });
+  
+  const label0 = document.createElement("div");
+  label0.textContent = "Summit Edpuzzle";
+  label0.style = `
+      color: ${color};
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: -4px;
+    `;
+  guiContainer.appendChild(label0);
+
+  const separatorLine = document.createElement("hr");
+  separatorLine.style = `
+    outline: 2px solid ${color};
+    border: 0px solid ${color};
+    margin: 10px 0;
+  `;
+  guiContainer.appendChild(separatorLine);
+
+  // where all the button code is contained. hi unlawful viewer!
+
+  const DIVIDER1 = document.createElement("div");
+  guiContainer.appendChild(DIVIDER1);
+
+  var LoadInfoBtn = document.createElement("button");
+  LoadInfoBtn.textContent = "[ Tap to begin ]";
+  LoadInfoBtn.className = "button";
+  guiContainer.appendChild(LoadInfoBtn);
+  LoadInfoBtn.style = `
+    padding: 6px;
+    background-color: ${color};
+    color: #fff;
+    border: none;
+    border-radius:6px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 5px;
+  `;
+  LoadInfoBtn.addEventListener("click", function () {
+    getdata();
+  });
+
+
+  async function getdata() {
+    LoadInfoBtn.textContent = "Loading...";
+    const assignmentID = window.location.href.split("/")[4];
+    const rawFileURL = "https://edpuzzle.com/api/v3/assignments/" + assignmentID;
+      const response = await fetch(rawFileURL.toString());
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const rawData = await response.json();
+      console.log('Fetched Data:', rawData);
+  
+      await decodeJSON(rawData);
+      LoadInfoBtn.remove();
+      Continue()
+  }
+
+  function wrapText(inputString,num) {
+    const words = inputString.split(/\s+/);
+    let currentLineLength = 0;
+    let resultString = '';
+    for (const word of words) {
+      if (currentLineLength + word.length > num) {
+        resultString += '\n';
+        currentLineLength = 0;
+      }
+      resultString += word + ' ';
+      currentLineLength += word.length + 1;
+    }
+    return resultString.trim();
+  }
+
+  function getDaysAgo(isoDateString) {
+    const currentDate = new Date();
+    const specifiedDate = new Date(isoDateString);
+    if (isNaN(specifiedDate)) {
+      return "Invalid date format";
+    }
+    const differenceInMilliseconds = currentDate - specifiedDate;
+    const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
+    return Math.floor(differenceInDays);
+  }
+  let jsonData
+  let title = ""
+  let teacherName = ""
+  let amtOfQuestions = 0
+  let videoDuration = 0
+  let videoDurationInSeconds = ``
+  let daysAgo = 0
+  async function decodeJSON(doc) {
+      jsonData = await doc;
+      teacherName = jsonData.medias["0"].user.name;
+      title = jsonData.medias["0"].title;
+      amtOfQuestions = Object.keys(jsonData.medias["0"].questions).length;
+      videoDurationInSeconds = jsonData.medias["0"].originalVideoDuration
+      videoDuration = `${Math.ceil(videoDurationInSeconds / 3600)}:${Math.floor(videoDurationInSeconds % 60)}`
+      daysAgo = getDaysAgo(jsonData.medias["0"].updatedAt);
+  }
+
+  function ShowAnswers() {
+    function HtmlToString(htmlString) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlString, 'text/html');
+      const decodedText = doc.body.textContent;
+      return decodedText;
+    }    
+    for (let i=0; i != amtOfQuestions; i++) {
+      let CurrentQuestion = jsonData.medias["0"].questions[i];
+      let AnswerType = CurrentQuestion.type;
+      
+      let amtOfAnswers = 1;
+      if (AnswerType == "open-ended") {
+        amtOfAnswers = 1
+      }if (AnswerType !== "open-ended") {
+        
+        amtOfAnswers = Object.keys(CurrentQuestion.choices).length;
+      }
+      for (let l=0; l != amtOfAnswers; l++) {
+        let currentChoice;
+        if (AnswerType == "multiple-choice") {
+          currentChoice = CurrentQuestion.choices[l];
+        }
+        
+        let ChoiceText = l;
+        const separatorLine2 = document.createElement("hr");
+        separatorLine2.style = `
+          outline: 1px solid ${color};
+          border: 0px solid ${color};
+          margin: 2px 0;
+        `;
+        separatorLine2.id = "QuestionLbl"
+        guiContainer.appendChild(separatorLine2);
+        const QuestionLabel = document.createElement("div");
+        QuestionLabel.style = `
+          color: ${color};
+          font-size: 12px;
+          font-weight: bold;
+          margin-bottom: -2px;
+          white-space: pre-wrap;
+        `;
+        guiContainer.appendChild(QuestionLabel);
+        QuestionLabel.id = "QuestionLbl";
+        const Qdivider = document.createElement("div");
+        guiContainer.appendChild(Qdivider);  
+        const Qdivider2 = document.createElement("div");
+        guiContainer.appendChild(Qdivider2);  
+        if (CurrentQuestion.type == 'multiple-choice'){
+          if (currentChoice != null) {
+            if (currentChoice.isCorrect == true) {
+              if (currentChoice.body && currentChoice.body["0"] && currentChoice.body["0"].html) {
+                ChoiceText = HtmlToString(currentChoice.body["0"].html);
+                ChoiceText = wrapText(ChoiceText,30);
+              }
+              QuestionLabel.textContent = `Question ${i+1}: `+ ChoiceText;
+            };
+          }
+        } else {
+          QuestionLabel.textContent = `Question ${i+1}: [ Open-Ended Question ]`;
+        }
+      }
+    }
+  }
+  
+
+  function Continue() { 
+     if (title.length > 25) {
+      title = title.slice(0,25).trim() + "..."
+    }
+    //  spawn all buttons after loading edpuzzle data
+    const TitleLbl = document.createElement("div");
+    TitleLbl.textContent = title;
+    TitleLbl.style = `
+        color: ${color};
+        font-size: 13px;
+        font-weight: bold;
+        margin-bottom: -4px;
+      `;
+    guiContainer.appendChild(TitleLbl);
+
+
+    const gokys = document.createElement("div");
+    guiContainer.appendChild(gokys);
+    var button = document.createElement("button");
+    button.textContent = "View Edpuzzle data";
+    button.className = "dropdown-button";
+    button.style.color = color
+    guiContainer.appendChild(button);
+    button.style = `
+      padding: 6px;
+      background-color: #ac07f2;
+      color: #fff;
+      border: none;
+      border-radius:6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 5px;
+    `;
+
+
+    button.onclick = toggleDropdown;
+
+    // Create a div for the dropdown content
+    var dropdownContent = document.createElement("div");
+    dropdownContent.className = "dropdown-content";
+    dropdownContent.id = "myDropdown";
+    dropdownContent.style.display = "none"; // Hide initially
+
+    var items = [
+      `Teacher: ${teacherName}`,
+      `Questions: #${amtOfQuestions}`,
+      `Duration: ${videoDuration}`,
+      `${daysAgo} Day(s) ago`
+    ];
+    var textLabels = [];
+    items.forEach(function (itemText) {
+      var item = document.createElement("div");
+      item.className = "dropdown-item";
+      item.textContent = "- " + itemText;
+      item.style = `
+        color: ${color};
+        font-weight: bold;
+        margin-top: 5px
+      `;
+      textLabels.push(item);
+
+      item.addEventListener("mouseover", function () {
+        item.textContent = "-> " + itemText // Change text on hover
+      });
+
+      // Add mouseout event listener to revert text when not hovering
+      item.addEventListener("mouseout", function () {
+        item.textContent = "- " + itemText;
+      });
+
+      item.onclick = function () {
+        console.log(itemText + " clicked");
+      };
+      dropdownContent.appendChild(item);
+    });
+
+    guiContainer.appendChild(dropdownContent);
+
+    // Toggle the dropdown display
+    function toggleDropdown() {
+      dropdownContent.style.display =
+        dropdownContent.style.display === "none" ? "block" : "none";
+    }
+
+    // Close the dropdown if the user clicks outside of it
+    window.onclick = function (event) {
+      if (!event.target.matches(".dropdown-button")) {
+        dropdownContent.style.display = "none";
+      }
+    };
+
+    const killmekillme3 = document.createElement("div");
+    guiContainer.appendChild(killmekillme3);
+
+    var getAnswersBtn = document.createElement("button");
+    getAnswersBtn.textContent = "Show answers";
+    getAnswersBtn.className = "dropdown-button";
+    guiContainer.appendChild(getAnswersBtn);
+    getAnswersBtn.style = `
+        padding: 6px;
+        background-color: ${color};
+        color: #FFF;
+        border: none;
+        border-radius:6px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 5px;
+      `;
+    getAnswersBtn.onclick = toggleAnswers;
+
+    let isAnswersShown = false
+    function toggleAnswers(){
+      if (isAnswersShown == false) {
+        ShowAnswers()
+        getAnswersBtn.textContent = "Hide Answers"
+        isAnswersShown = true
+      }  else {
+        isAnswersShown = false
+        getAnswersBtn.textContent = "Show Answers"
+        var elements = document.querySelectorAll('#QuestionLbl');
+        elements.forEach(function (element) {
+          element.parentNode.removeChild(element);
+        });
+      }
+    }
+  
+    
+    const killmekillme7 = document.createElement("div");
+    guiContainer.appendChild(killmekillme7);
+
+    var button3 = document.createElement("button");
+    button3.textContent = "Destroy GUI";
+    button3.className = "dropdown-button";
+    guiContainer.appendChild(button3);
+    button3.style = `
+        padding: 6px;
+        background-color: #ac07f2;
+        color: #fff;
+        border: none;
+        border-radius:6px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 5px;
+      `;
+    button3.onclick = function () {
+      guiContainer.remove();
+    };
+
+    const killmekillme = document.createElement("div");
+    guiContainer.appendChild(killmekillme);
+
+    document.addEventListener("keyup", (event) => {
+      if (event.key === "p") {
+        skipQuestion();
+      }
+    });
+
+    document.addEventListener("keyup", (event) => {
+      if (event.key === ",") {
+        toggleGUIVisibility();
+      }
+    });
+
+    function toggleGUIVisibility() {
+      guiContainer.style.display =
+        guiContainer.style.display === "none" ? "block" : "none";
+    }
+
+    function rainbowFade() {
+      let angle = 0;
+      let nutsack = 0;
+      let introMultiplier = 0;
+
+      function changeColor() {
+        introMultiplier += 0.05;
+        label0.style.color = color;
+        separatorLine.style.border = `1px solid ${color}`;
+        guiContainer.style.outline = `${
+          Math.abs(Math.cos(nutsack / 80)) * 5
+        }px solid ${color}`;
+        button.style.backgroundColor = color;
+        guiContainer.style.opacity = introMultiplier;
+        button3.style.backgroundColor = color;
+        angle += 0.015;
+        nutsack++;
+        requestAnimationFrame(changeColor);
+      }
+      changeColor();
+    }
+
+    rainbowFade();
+
+  }
+
+})();
