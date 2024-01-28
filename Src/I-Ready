@@ -1,13 +1,12 @@
 (function() {
-  // godlike v1.32
   var startText = ""
-	if (document.querySelector("#summitMainContainer") !== null){
-  	document.querySelector("#summitMainContainer").remove()
+	if (document.querySelector("#summitMainContainerIR") !== null){
+  	document.querySelector("#summitMainContainerIR").remove()
     startText = "Summit has detected that\nit has already been launched,\nso it deleted it for you."
   }
   let color
   const guiContainer = document.createElement('div');
-  guiContainer.id = 'summitMainContainer'
+  guiContainer.id = 'summitMainContainerIR'
   guiContainer.style = `
     position: fixed;
     top: 10px;
