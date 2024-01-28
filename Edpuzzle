@@ -1,5 +1,4 @@
 (function () {
-  
   let color = `rgb(245, 171, 44)`;
   const guiContainer = document.createElement("div");
   guiContainer.id = "summitMainContainerEdpuzzle";
